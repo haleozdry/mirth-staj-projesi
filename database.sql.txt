@@ -1,0 +1,10 @@
+CREATE TABLE siparisler (
+    id SERIAL PRIMARY KEY,
+    hbys_siparis_no VARCHAR(50),
+    hasta_adi VARCHAR(100),
+    hasta_soyadi VARCHAR(100),
+    tc_no VARCHAR(11),
+    istenen_test VARCHAR(100),
+    siparis_tarihi TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ham_veri TEXT
+);
