@@ -3,7 +3,7 @@
   <nextMetaDataId>2</nextMetaDataId>
   <name>02_Order_Integration</name>
   <description></description>
-  <revision>2</revision>
+  <revision>6</revision>
   <sourceConnector version="4.4.2">
     <metaDataId>0</metaDataId>
     <name>sourceConnector</name>
@@ -18,7 +18,7 @@
         <port>9002</port>
       </listenerConnectorProperties>
       <sourceConnectorProperties version="4.4.2">
-        <responseVariable>None</responseVariable>
+        <responseVariable>OzelYanit</responseVariable>
         <respondAfterProcessing>true</respondAfterProcessing>
         <processBatch>false</processBatch>
         <firstResponse>false</firstResponse>
@@ -36,7 +36,7 @@
       <includeMetadata>false</includeMetadata>
       <binaryMimeTypes>application/.*(?&lt;!json|xml)$|image/.*|video/.*|audio/.*</binaryMimeTypes>
       <binaryMimeTypesRegex>true</binaryMimeTypesRegex>
-      <responseContentType>text/plain</responseContentType>
+      <responseContentType>application/json</responseContentType>
       <responseDataTypeBinary>false</responseDataTypeBinary>
       <responseStatusCode></responseStatusCode>
       <responseHeaders class="linked-hash-map"/>
@@ -127,7 +127,17 @@ channelMap.put(&apos;hasta_adi&apos;, json.firstName);
 channelMap.put(&apos;hasta_soyadi&apos;, json.lastName);
 channelMap.put(&apos;istenen_test&apos;, json.orderCode);
 channelMap.put(&apos;siparis_no&apos;, &apos;ORD-1001&apos;); // JSON&apos;da olmadığı için şimdilik manuel atıyoruz
-channelMap.put(&apos;ham_veri&apos;, connectorMessage.getRawData());</script>
+channelMap.put(&apos;ham_veri&apos;, connectorMessage.getRawData());
+// Postman&apos;e döneceğimiz JSON&apos;ı hazırlıyoruz
+var yanit = {
+    &quot;status&quot;: &quot;SUCCESS&quot;,
+    &quot;message&quot;: &quot;Siparis PostgreSQL&apos;e basariyla kaydedildi.&quot;,
+    &quot;orderId&quot;: &quot;ORD-1001&quot;,
+    &quot;timestamp&quot;: new Date().toISOString()
+};
+
+// Bu yanıtı Mirth&apos;in özel yanıt listesine &apos;OzelYanit&apos; adıyla kaydediyoruz
+responseMap.put(&apos;OzelYanit&apos;, JSON.stringify(yanit));</script>
           </com.mirth.connect.plugins.javascriptstep.JavaScriptStep>
         </elements>
         <inboundTemplate encoding="base64"></inboundTemplate>
@@ -148,7 +158,23 @@ channelMap.put(&apos;ham_veri&apos;, connectorMessage.getRawData());</script>
         </outboundProperties>
       </transformer>
       <responseTransformer version="4.4.2">
-        <elements/>
+        <elements>
+          <com.mirth.connect.plugins.javascriptstep.JavaScriptStep version="4.4.2">
+            <sequenceNumber>0</sequenceNumber>
+            <enabled>true</enabled>
+            <script>var yanit = {
+    &quot;status&quot;: &quot;SUCCESS&quot;,
+    &quot;message&quot;: &quot;Sipariş başarıyla PostgreSQL&apos;e kaydedildi.&quot;,
+    &quot;orderId&quot;: &quot;ORD-1001&quot;,
+    &quot;timestamp&quot;: new Date().toISOString()
+};
+
+// Veritabanı dönüşünü kendi JSON&apos;ımızla eziyoruz
+response.setMessage(JSON.stringify(yanit));</script>
+          </com.mirth.connect.plugins.javascriptstep.JavaScriptStep>
+        </elements>
+        <inboundTemplate encoding="base64"></inboundTemplate>
+        <outboundTemplate encoding="base64"></outboundTemplate>
         <inboundDataType>JSON</inboundDataType>
         <outboundDataType>JSON</outboundDataType>
         <inboundProperties class="com.mirth.connect.plugins.datatypes.json.JSONDataTypeProperties" version="4.4.2">
@@ -175,9 +201,15 @@ channelMap.put(&apos;ham_veri&apos;, connectorMessage.getRawData());</script>
   </destinationConnectors>
   <preprocessingScript>// Modify the message variable below to pre process data
 return message;</preprocessingScript>
-  <postprocessingScript>// This script executes once after a message has been processed
-// Responses returned from here will be stored as &quot;Postprocessor&quot; in the response map
-return;</postprocessingScript>
+  <postprocessingScript>var yanit = {
+    &quot;status&quot;: &quot;SUCCESS&quot;,
+    &quot;message&quot;: &quot;Siparis PostgreSQL&apos;e basariyla kaydedildi.&quot;,
+    &quot;orderId&quot;: &quot;ORD-1001&quot;,
+    &quot;timestamp&quot;: new Date().toISOString()
+};
+
+// Mirth&apos;e bu JSON&apos;ı zorla HTTP Response olarak döndürtüyoruz
+return ResponseFactory.getSuccessResponse(JSON.stringify(yanit));</postprocessingScript>
   <deployScript>// This script executes once when the channel is deployed
 // You only have access to the globalMap and globalChannelMap here to persist data
 return;</deployScript>
@@ -222,7 +254,7 @@ return;</undeployScript>
     <metadata>
       <enabled>true</enabled>
       <lastModified>
-        <time>1784802332380</time>
+        <time>1784805781662</time>
         <timezone>Europe/Istanbul</timezone>
       </lastModified>
       <pruningSettings>
